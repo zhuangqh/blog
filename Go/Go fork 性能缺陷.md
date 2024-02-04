@@ -62,5 +62,7 @@ func forkExec(argv0 string, argv []string, attr *ProcAttr) (pid int, err error) 
 其实在 linux 高版本下是可以去掉这个 lock 的，现在的 forklock 是一种兼容性考虑，本质的需求是将 openfd 和 fork 互斥，但是不应该让 openfd之间或者 fork 之间互斥，这有点类似 “异或”的逻辑。
 
 最后的方案是这样的：fork 继续用写锁，但是引入一个计数器，fork 获取写锁的时候，如果发现写锁已经被获取，则计数加一，直接成功。释放写锁的时候，计数减一，如果计数为 0，则真正释放写锁。同时会检查读锁的等待情况，让出写锁，防止读锁饿死。
-![[gofork.png]]
+
+![](../img/gofork.png)
+
 这样子 fork 和 openfd 能交替执行，相同的操作是可以并行的。经过优化后，50 并发下 fork max 只有 20ms+。并发越高，收益会越明显。
