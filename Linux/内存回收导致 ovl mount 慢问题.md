@@ -43,7 +43,25 @@ mount 或者 umount 是一直在进行的，但是没有内存回收就没问题
 
 ## 捕获实际锁的占用者
 
-通过 ebpf 脚本分析锁的持有时间，这里最坑的是内核用的是 trylock，而不是直接的 lock。
+这里最坑的是内核用的是 trylock，而不是直接的 lock。重点通过 ebpf 来分析down_read_trylock和 up_read 的耗时。
+
+首先查询一下待分析的函数的定义：
+```c
+// https://elixir.bootlin.com/linux/v5.4.251/source/kernel/locking/rwsem.c#L1544
+
+int down_read_trylock(struct rw_semaphore *sem)
+{
+	int ret = __down_read_trylock(sem);
+	if (ret == 1)
+		rwsem_acquire_read(&sem->dep_map, 0, 1, _RET_IP_);
+	return ret;
+}
+EXPORT_SYMBOL(down_read_trylock);
+```
+
+第一个参数是rw_semaphore的地址，所以我们得找到对应的锁的地址。
+
+bpftrace 工具提供了 kaddr 函数，用于获取锁对象的地址，在这个问题里，我们关心的是shrinker_rwsem这个锁，所以在 bpftrace 脚本里比对 arg0 和 kaddr("shrinker_rwsem")，就能抓到我们关心的行为。
 
 ```
 #!/usr/bin/env bpftrace
