@@ -1,3 +1,41 @@
 @use "./base.scss";
 
 // put your custom CSS here!
+
+// Make left sidebar font size smaller
+.sidebar.left {
+    font-size: 0.85rem;
+
+    // Explorer folder names and links
+    .explorer {
+
+        .folder-container div>a,
+        .folder-container div>button span {
+            font-size: 0.85rem;
+            line-height: 1.35rem;
+        }
+
+        .explorer-content ul li>a {
+            font-size: 0.85rem;
+        }
+    }
+
+    // Recent notes section
+    .recent-notes {
+        >h3 {
+            font-size: 0.9rem;
+        }
+
+        >ul.recent-ul>li {
+            margin: 0.2rem 0;
+        }
+
+        .section>.desc>h3 {
+            font-size: 0.85rem;
+        }
+
+        .section>.meta {
+            font-size: 0.8rem;
+        }
+    }
+}
